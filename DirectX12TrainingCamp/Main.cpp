@@ -1,10 +1,14 @@
 #include <Windows.h>
+#include "1\Direct3D12HelloTriangle.h"
+
 HINSTANCE hInst;
 constexpr LPCTSTR WindowClassName = "DirectX12TrainingCamp";
 
 ATOM                MyRegisterClass(HINSTANCE hInstance);
-BOOL                InitInstance(HINSTANCE, int);
+BOOL                InitInstance(HINSTANCE, int,UINT,UINT);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
+
+TrainingCamp::Direct3D12HelloTriangle* dx12;
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     _In_opt_ HINSTANCE hPrevInstance,
@@ -16,7 +20,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     MyRegisterClass(hInstance);
 
-    if (!InitInstance(hInstance, nCmdShow))
+    if (!InitInstance(hInstance, nCmdShow,1280,720))
     {
         return FALSE;
     }
@@ -29,6 +33,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             DispatchMessage(&msg);
         }
         else {
+            dx12->OnUpdate();
+            dx12->OnRender();
         }
     }
 
@@ -40,29 +46,33 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     WNDCLASSEX wcex = { 0 };
 
     wcex.cbSize = sizeof(WNDCLASSEX);
-
     wcex.style = CS_HREDRAW | CS_VREDRAW;
     wcex.lpfnWndProc = WndProc;
     wcex.cbClsExtra = 0;
     wcex.cbWndExtra = 0;
     wcex.hInstance = hInstance;
-    //wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_TEMPLATEWINDOWS));
-    wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
-    wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-    //wcex.lpszMenuName = MAKEINTRESOURCE(IDC_TEMPLATEWINDOWS);
     wcex.lpszClassName = WindowClassName;
-    //wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
 
     return RegisterClassEx(&wcex);
 }
 
-BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
+BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, UINT width, UINT height)
 {
     hInst = hInstance;
 
-    HWND hWnd = CreateWindow(WindowClassName, WindowClassName, WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
-
+    HWND hWnd = 
+    CreateWindow(
+        WindowClassName,
+        WindowClassName,
+        WS_OVERLAPPEDWINDOW,
+        CW_USEDEFAULT,
+        CW_USEDEFAULT,
+        width,
+        height,
+        nullptr,		
+        nullptr,
+        hInstance,
+        nullptr);
     if (!hWnd)
     {
         return FALSE;
@@ -70,7 +80,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
     ShowWindow(hWnd, nCmdShow);
     UpdateWindow(hWnd);
-
+    dx12 = new TrainingCamp::Direct3D12HelloTriangle(width, height, hWnd);
+    dx12->OnInit();
     return TRUE;
 }
 
@@ -78,12 +89,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
-    case WM_COMMAND:
-    {
-        int wmId = LOWORD(wParam);
-        return DefWindowProc(hWnd, message, wParam, lParam);
-    }
-    break;
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
